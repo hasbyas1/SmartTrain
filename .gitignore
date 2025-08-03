@@ -8,6 +8,11 @@ venv/
 env/
 
 # Folders to ignore
+runs/
+data/test/
+data/train/
+data/valid/
+pretrained_yolo/
 
 # System/Editor files
 .DS_Store
