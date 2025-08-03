@@ -1,0 +1,10 @@
+How to Run:
+1. Uninstall USB-SERIAL CH340 [in Windows 11 Usually, Go to Device Managers > Ports (COM & LPT)]
+2. Install the USB CH340 2019 version (don't install the newest version)
+3. Upload and run the Arduino Esp32CamAccess
+4. Before upload, connect Esp32 Cam with its download board and press IOD and RST button at the same time (just like screenshot button on your phone) to enter the download mode
+5. Set the Wifi SSID and Password
+6. Open the Serial monitor with baud rate 115200
+7. Compile and Upload the code
+8. Serial Monitor will show it's link http which can be accessed anywhere or use it anywhere especially like vscode (with it's http protocol, it could be accessed by ANYONE EASILY, so it's not that secured
+9. Done
