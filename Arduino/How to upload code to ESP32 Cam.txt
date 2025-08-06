@@ -5,11 +5,11 @@ To do that:
 1. Firstly, connect the ESP32 Cam with the USB cable and connect it to a PC device
 2. Go to: Windows search > Device Manager > Ports COM & LPT > USB-SERIAL CH340 (Right click) > Uninstall device > Attempt to remove the driver from this device (Check) > Uninstall. Make sure the USB-SERIAL CH340 is there, because if it's not, the ESP32 Cam is not detected
 3. Then install the older driver version manually; CH341SER_2019.EXE should've done the job
-4. Close and open again the Arduino Uno (If it was opened before)
+4. Close and open again the Arduino IDE (If it was opened before)
 
 YOU ARE SUGGESTED TO DO THESE STEPS (1-4) FREQUENTLY BECAUSE WINDOWS 11 WILL AUTOMATICALLY UPDATE THE USB-SERIAL TO ITS LATEST VERSION ON ITS OWN AT A RANDOM TIME
 
-5. To check if the system read it, select the board and its port first. (We suggest the [AI Thinker ESP32-CAM] board). If the port is not detected, try reinstalling the driver again, then close and open the Arduino Uno again
+5. To check if the system read it, select the board and its port first. (We suggest the [AI Thinker ESP32-CAM] board). If the port is not detected, try reinstalling the driver again, then close and open the Arduino IDE again
 6. After selecting board and port, go to the serial monitor and set the baud rate to 115200. See if it's sending a communication message or a signal
 7. Try pushing the RST button on the ESP32 Cam Download board. If you can see it's sending a communication message or a signal, that means the ESP32 Cam on its Download board is finally read by the system
 8. Set the Wi-Fi SSID and Password in the code text editor. Empty the password like "" if there's no password
