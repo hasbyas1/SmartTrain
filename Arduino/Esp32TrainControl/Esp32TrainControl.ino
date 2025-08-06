@@ -4,8 +4,8 @@
 #include <ESP32Servo.h>
 
 // WiFi credentials (same as ESP32-CAM)
-const char* ssid = "EsDehidrasiHouse";
-const char* password = "11011011";
+const char* ssid = "ICT-LAB WORKSPACE";
+const char* password = "ICTLAB2024";
 
 // Hardware pins
 const int SERVO_PIN = 18;
@@ -29,7 +29,7 @@ unsigned long systemStartTime = 0;
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("\n🚂 ESP32 Train Controller - Simple Version");
+    Serial.println("\nESP32 Train Controller - Simple Version");
     Serial.println("==========================================");
     
     systemStartTime = millis();
@@ -45,13 +45,13 @@ void setup() {
     
     // Start server
     server.begin();
-    Serial.println("✅ HTTP Server started on port 80");
+    Serial.println("HTTP Server started on port 80");
     
     printSystemInfo();
 }
 
 void setupHardware() {
-    Serial.println("🔧 Initializing hardware...");
+    Serial.println("Initializing hardware...");
     
     // Servo initialization
     barrierServo.attach(SERVO_PIN);
@@ -63,7 +63,7 @@ void setupHardware() {
     digitalWrite(BUZZER_PIN, LOW);
     
     // Test hardware
-    Serial.println("🧪 Testing hardware...");
+    Serial.println("Testing hardware...");
     
     // Test servo
     barrierServo.write(BARRIER_DOWN);
@@ -76,11 +76,11 @@ void setupHardware() {
     delay(100);
     digitalWrite(BUZZER_PIN, LOW);
     
-    Serial.println("✅ Hardware initialized and tested");
+    Serial.println("Hardware initialized and tested");
 }
 
 void connectToWiFi() {
-    Serial.println("📶 Connecting to WiFi...");
+    Serial.println("Connecting to WiFi...");
     WiFi.begin(ssid, password);
     WiFi.setSleep(false);  // Disable power saving for better performance
     
@@ -95,10 +95,10 @@ void connectToWiFi() {
     
     if (WiFi.status() == WL_CONNECTED) {
         Serial.println();
-        Serial.println("✅ WiFi connected successfully!");
-        Serial.print("📶 IP Address: ");
+        Serial.println("WiFi connected successfully!");
+        Serial.print("IP Address: ");
         Serial.println(WiFi.localIP());
-        Serial.print("📶 Signal Strength: ");
+        Serial.print("Signal Strength: ");
         Serial.print(WiFi.RSSI());
         Serial.println(" dBm");
         
@@ -106,7 +106,7 @@ void connectToWiFi() {
         soundAlert(2);
     } else {
         Serial.println();
-        Serial.println("❌ WiFi connection failed!");
+        Serial.println("WiFi connection failed!");
         Serial.println("Please check SSID and password");
         
         // Error sound (if buzzer connected)
@@ -120,7 +120,7 @@ void connectToWiFi() {
 }
 
 void setupWebServer() {
-    Serial.println("🌐 Setting up web server routes...");
+    Serial.println("Setting up web server routes...");
     
     // CORS headers for all responses
     server.enableCORS(true);
@@ -145,7 +145,7 @@ void setupWebServer() {
         server.send(200, "text/plain", "ESP32 Train Controller - Test OK");
     });
     
-    Serial.println("✅ Web server routes configured");
+    Serial.println("Web server routes configured");
 }
 
 void handleRootPage() {
@@ -176,7 +176,7 @@ void handleStatusPage() {
 
 void handleControlPost() {
     if (!server.hasArg("plain")) {
-        Serial.println("❌ No data received in POST request");
+        Serial.println("No data received in POST request");
         server.send(400, "application/json", "{\"error\":\"No data received\"}");
         return;
     }
@@ -188,7 +188,7 @@ void handleControlPost() {
     DeserializationError error = deserializeJson(doc, body);
     
     if (error) {
-        Serial.println("❌ JSON parsing failed: " + String(error.c_str()));
+        Serial.println("JSON parsing failed: " + String(error.c_str()));
         server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
         return;
     }
@@ -217,9 +217,9 @@ void handleControlPost() {
         server.sendHeader("Access-Control-Allow-Origin", "*");
         server.send(200, "application/json", responseStr);
         
-        Serial.println("✅ Command executed successfully");
+        Serial.println("Command executed successfully");
     } else {
-        Serial.println("❌ Command execution failed");
+        Serial.println("Command execution failed");
         server.send(400, "application/json", "{\"error\":\"Invalid command\"}");
     }
 }
@@ -228,32 +228,32 @@ void handleControlGet() {
     String command = server.arg("command");
     String value = server.arg("value");
     
-    Serial.println("🌐 Manual web control: " + command + " = " + value);
+    Serial.println("Manual web control: " + command + " = " + value);
     
     if (command.length() > 0 && value.length() > 0) {
         bool success = executeCommand(command, value, 0.0, true);
         
         String response = "<html><head><title>Control Result</title></head><body>";
-        response += "<h1>🚂 ESP32 Train Controller</h1>";
+        response += "<h1>ESP32 Train Controller</h1>";
         
         if (success) {
-            response += "<h2 style='color: green;'>✅ Command Executed Successfully!</h2>";
+            response += "<h2 style='color: green;'>Command Executed Successfully!</h2>";
             response += "<p><strong>Command:</strong> " + command + " = " + value + "</p>";
-            response += "<p><strong>Barrier State:</strong> " + String(barrierDown ? "DOWN 🔻" : "UP 🔺") + "</p>";
+            response += "<p><strong>Barrier State:</strong> " + String(barrierDown ? "DOWN" : "UP") + "</p>";
         } else {
-            response += "<h2 style='color: red;'>❌ Command Failed!</h2>";
+            response += "<h2 style='color: red;'>Command Failed!</h2>";
             response += "<p>Invalid command: " + command + " = " + value + "</p>";
         }
         
-        response += "<p><a href='/'>← Back to Dashboard</a></p>";
+        response += "<p><a href='/'>Back to Dashboard</a></p>";
         response += "</body></html>";
         
         server.send(success ? 200 : 400, "text/html", response);
     } else {
         server.send(400, "text/html", 
-            "<h1>❌ Missing Parameters</h1>"
+            "<h1>Missing Parameters</h1>"
             "<p>Please provide both 'command' and 'value' parameters</p>"
-            "<p><a href='/'>← Back to Dashboard</a></p>");
+            "<p><a href='/'>Back to Dashboard</a></p>");
     }
 }
 
@@ -362,7 +362,7 @@ String generateDashboardHTML() {
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚂 Smart Train Level Crossing</h1>
+            <h1>Smart Train Level Crossing</h1>
             <h2>ESP32 Controller (Simple Version)</h2>
         </div>
         
@@ -375,12 +375,12 @@ String generateDashboardHTML() {
     }
     
     html += R"rawliteral(">
-            <h2>🚧 Barrier Status: )rawliteral";
+            <h2>Barrier Status: )rawliteral";
             
     if (barrierDown) {
-        html += "🔻 DOWN (BLOCKING)";
+        html += "DOWN (BLOCKING)";
     } else {
-        html += "🔺 UP (CLEAR)";
+        html += "UP (CLEAR)";
     }
     
     html += R"rawliteral(</h2>
@@ -418,16 +418,16 @@ String generateDashboardHTML() {
         </div>
         
         <div class="status-card">
-            <h3>🎛️ Manual Control</h3>
+            <h3>Manual Control</h3>
             <p>Use these buttons for manual barrier control:</p>
             <div class="control-section">
-                <a href="/control?command=barrier&value=down" class="btn btn-danger">⬇️ Lower Barrier</a>
-                <a href="/control?command=barrier&value=up" class="btn btn-success">⬆️ Raise Barrier</a>
+                <a href="/control?command=barrier&value=down" class="btn btn-danger">Lower Barrier</a>
+                <a href="/control?command=barrier&value=up" class="btn btn-success">Raise Barrier</a>
             </div>
         </div>
         
         <div class="status-card">
-            <h3>📊 System Information</h3>
+            <h3>System Information</h3>
             <div class="info-grid">
                 <div class="info-item">
                     <strong>IP Address:</strong><br>)rawliteral";
@@ -435,7 +435,7 @@ String generateDashboardHTML() {
     html += R"rawliteral(</div>
                 <div class="info-item">
                     <strong>WiFi Status:</strong><br>)rawliteral";
-    html += (WiFi.status() == WL_CONNECTED) ? "Connected ✅" : "Disconnected ❌";
+    html += (WiFi.status() == WL_CONNECTED) ? "Connected" : "Disconnected";
     html += R"rawliteral(</div>
                 <div class="info-item">
                     <strong>Free Memory:</strong><br>)rawliteral";
@@ -449,7 +449,7 @@ String generateDashboardHTML() {
         </div>
         
         <div style="text-align: center; margin-top: 30px; opacity: 0.7;">
-            <p>🔄 Auto-refresh every 5 seconds</p>
+            <p>Auto-refresh every 5 seconds</p>
         </div>
     </div>
 </body>
@@ -460,7 +460,7 @@ String generateDashboardHTML() {
 }
 
 bool executeCommand(String command, String value, float confidence, bool manual) {
-    Serial.print("⚙️  Executing: ");
+    Serial.print("Executing: ");
     Serial.print(command);
     Serial.print(" = ");
     Serial.print(value);
@@ -476,13 +476,13 @@ bool executeCommand(String command, String value, float confidence, bool manual)
         }
     }
     
-    Serial.println("❌ Unknown command: " + command);
+    Serial.println("Unknown command: " + command);
     return false;
 }
 
 void lowerBarrier(float confidence, bool manual) {
     if (!barrierDown) {
-        Serial.print("🔻 LOWERING BARRIER");
+        Serial.print("LOWERING BARRIER");
         Serial.print(manual ? " [MANUAL]" : " [AUTO]");
         Serial.print(" - Confidence: ");
         Serial.print(confidence, 2);
@@ -507,15 +507,15 @@ void lowerBarrier(float confidence, bool manual) {
         lastCommand = "barrier=down";
         lastCommand += (manual ? " (manual)" : " (auto)");
         
-        Serial.println("✅ Barrier lowered successfully");
+        Serial.println("Barrier lowered successfully");
     } else {
-        Serial.println("⚠️  Barrier already down - ignoring command");
+        Serial.println("Barrier already down - ignoring command");
     }
 }
 
 void raiseBarrier(bool manual) {
     if (barrierDown) {
-        Serial.print("🔺 RAISING BARRIER");
+        Serial.print("RAISING BARRIER");
         Serial.println(manual ? " [MANUAL]" : " [AUTO]");
         
         // Sound alert (1 beep for raising)
@@ -537,9 +537,9 @@ void raiseBarrier(bool manual) {
         lastCommand = "barrier=up";
         lastCommand += (manual ? " (manual)" : " (auto)");
         
-        Serial.println("✅ Barrier raised successfully");
+        Serial.println("Barrier raised successfully");
     } else {
-        Serial.println("⚠️  Barrier already up - ignoring command");
+        Serial.println("Barrier already up - ignoring command");
     }
 }
 
@@ -555,7 +555,7 @@ void soundAlert(int beeps) {
 void checkSafetyTimeout() {
     // Safety feature: Auto-raise barrier if no command for 60 seconds
     if (barrierDown && (millis() - lastCommandTime) > 60000) {
-        Serial.println("⚠️  SAFETY TIMEOUT - Auto-raising barrier after 60 seconds");
+        Serial.println("SAFETY TIMEOUT - Auto-raising barrier after 60 seconds");
         raiseBarrier(false);
         lastCommand += " (SAFETY_TIMEOUT)";
     }
@@ -563,24 +563,24 @@ void checkSafetyTimeout() {
 
 void printSystemInfo() {
     Serial.println("\n==================================================");
-    Serial.println("📊 SYSTEM INFORMATION");
+    Serial.println("SYSTEM INFORMATION");
     Serial.println("==================================================");
-    Serial.println("🌐 Network:");
+    Serial.println("Network:");
     Serial.println("   WiFi Status: " + String(WiFi.status() == WL_CONNECTED ? "Connected ✅" : "Disconnected ❌"));
     Serial.println("   IP Address: " + WiFi.localIP().toString());
     Serial.println("   Signal: " + String(WiFi.RSSI()) + " dBm");
     
-    Serial.println("🔧 Hardware:");
+    Serial.println("Hardware:");
     Serial.println("   Servo Pin: GPIO" + String(SERVO_PIN));
     Serial.println("   Buzzer Pin: GPIO" + String(BUZZER_PIN) + " (optional)");
     
-    Serial.println("🌐 Web Interface:");
+    Serial.println("Web Interface:");
     Serial.println("   Dashboard: http://" + WiFi.localIP().toString() + "/");
     Serial.println("   Status API: http://" + WiFi.localIP().toString() + "/status");
     Serial.println("   Control API: http://" + WiFi.localIP().toString() + "/control");
     
     Serial.println("==================================================");
-    Serial.println("✅ System ready!");
+    Serial.println("System ready!");
     Serial.println();
 }
 
@@ -588,8 +588,8 @@ void printPeriodicStatus() {
     static unsigned long lastStatusPrint = 0;
     
     if (millis() - lastStatusPrint > 30000) {  // Every 30 seconds
-        Serial.print("📈 STATUS: Barrier=");
-        Serial.print(barrierDown ? "DOWN🔻" : "UP🔺");
+        Serial.print("STATUS: Barrier=");
+        Serial.print(barrierDown ? "DOWN" : "UP");
         Serial.print(" | Commands=");
         Serial.print(totalCommands);
         Serial.print(" | Uptime=");
@@ -613,7 +613,7 @@ void loop() {
     
     // WiFi reconnection check
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("⚠️  WiFi disconnected, attempting reconnection...");
+        Serial.println("WiFi disconnected, attempting reconnection...");
         WiFi.reconnect();
         delay(5000);
     }

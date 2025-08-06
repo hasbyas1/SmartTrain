@@ -485,7 +485,7 @@ class SmartTrainServer:
             action_taken = None
             
             # Decision logic
-            if consecutive_bus and self.barrier_state == "UP" and avg_confidence > 0.7:
+            if consecutive_bus and self.barrier_state == "UP" and avg_confidence > 0.6:
                 # Lower barrier
                 if self.send_command_to_train("barrier", "down"):
                     action_taken = "BARRIER_LOWERED"
@@ -597,8 +597,8 @@ class SmartTrainServer:
 
 def main():
     # Configuration
-    ESP32_CAM_IP = "192.168.1.38"        # Your ESP32-CAM IP
-    ESP32_TRAIN_IP = "192.168.1.39"      # Your ESP32-Train IP  
+    ESP32_CAM_IP = "192.168.1.158"        # Your ESP32-CAM IP
+    ESP32_TRAIN_IP = "192.168.1.193"      # Your ESP32-Train IP  
     MODEL_PATH = "./runs/detect/train/weights/best.pt"  # Your YOLO model
     
     # Verify model exists
