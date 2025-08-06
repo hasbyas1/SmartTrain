@@ -1,6 +1,11 @@
 Requirements:
 - Python version 3.11.9
 - And dedicated Libraries in the code file
+- ESP32 Cam
+- ESP32 Cam Download board
+- ESP32
+- PC/Laptop Processing
+- Micro USB Cable(x2)
 
 1. Upload the [Esp32CamAccess.ino] to ESP32 CAM. See [How to upload code to ESP32 Cam.txt] in the Arduino folder for instructions
 2. Upload the [Esp32TrainControl.ino] to ESP32 CAM. See [How to upload code to ESP32 Train.txt] in the Arduino folder for instructions
