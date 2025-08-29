@@ -9,8 +9,8 @@
 // ===========================
 // Enter your WiFi credentials
 // ===========================
-const char *ssid = "RaihanD";
-const char *password = "hayangwaesiah";
+const char *ssid = "ICT-LAB WORKSPACE";
+const char *password = "ICTLAB2024";
 
 void startCameraServer();
 void setupLedFlash();
