@@ -3,8 +3,8 @@
 #include "esp_http_server.h"
 
 // WiFi credentials
-const char* ssid = "EsDehidrasi";
-const char* password = "11011011";
+const char* ssid = "ICT-LAB WORKSPACE";
+const char* password = "ICTLAB2024";
 
 // Camera pins for ESP32-CAM
 #define PWDN_GPIO_NUM     32
