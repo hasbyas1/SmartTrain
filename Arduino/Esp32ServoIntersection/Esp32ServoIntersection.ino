@@ -10,9 +10,9 @@ const char* password = "ICTLAB2024";
 // Hardware pins
 const int SERVO_PIN = 14;
 
-// Servo positions
-const int BARRIER_UP = 90;
-const int BARRIER_DOWN = 0;
+// Servo positions (a bit reverse from the Train Control because it's adjusted the postion of it looks)
+const int BARRIER_UP = 0;
+const int BARRIER_DOWN = 90;
 
 // Global objects
 WebServer server(80);
