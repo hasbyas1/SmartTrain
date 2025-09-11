@@ -12,15 +12,15 @@ const int SERVO_PIN = 18;
 const int BUZZER_PIN = 4;  // Optional
 
 // Servo positions
-const int BARRIER_UP = 90;      // Degrees for barrier up
-const int BARRIER_DOWN = 0;     // Degrees for barrier down
+const int BRAKE_UP = 90;      // Degrees for brake up
+const int BRAKE_DOWN = 0;     // Degrees for brake down
 
 // Global objects
 WebServer server(80);
-Servo barrierServo;
+Servo brakeServo;
 
 // State variables
-bool barrierDown = false;
+bool brakeDown = false;
 unsigned long lastCommandTime = 0;
 String lastCommand = "";
 float lastConfidence = 0.0;
@@ -54,8 +54,8 @@ void setupHardware() {
     Serial.println("Initializing hardware...");
     
     // Servo initialization
-    barrierServo.attach(SERVO_PIN);
-    barrierServo.write(BARRIER_UP);  // Start with barrier up
+    brakeServo.attach(SERVO_PIN);
+    brakeServo.write(BRAKE_UP);  // Start with brake up
     delay(500); // Give servo time to move
     
     // Buzzer setup (optional)
@@ -66,9 +66,9 @@ void setupHardware() {
     Serial.println("Testing hardware...");
     
     // Test servo
-    barrierServo.write(BARRIER_DOWN);
+    brakeServo.write(BRAKE_DOWN);
     delay(500);
-    barrierServo.write(BARRIER_UP);
+    brakeServo.write(BRAKE_UP);
     delay(500);
     
     // Test buzzer (if connected)
@@ -142,7 +142,7 @@ void setupWebServer() {
     
     // Test endpoint
     server.on("/test", HTTP_GET, []() {
-        server.send(200, "text/plain", "ESP32 Train Controller - Test OK");
+        server.send(200, "text/plain", "Train Brake Controller - Test OK");
     });
     
     Serial.println("Web server routes configured");
@@ -155,8 +155,8 @@ void handleRootPage() {
 
 void handleStatusPage() {
     StaticJsonDocument<300> status;
-    status["barrier_down"] = barrierDown;
-    status["barrier_state"] = barrierDown ? "DOWN" : "UP";
+    status["brake_down"] = brakeDown;
+    status["brake_state"] = brakeDown ? "DOWN" : "UP";
     status["last_command"] = lastCommand;
     status["last_confidence"] = lastConfidence;
     status["total_commands"] = totalCommands;
@@ -207,7 +207,7 @@ void handleControlPost() {
         response["status"] = "success";
         response["command"] = command;
         response["value"] = value;
-        response["barrier_state"] = barrierDown ? "DOWN" : "UP";
+        response["brake_state"] = brakeDown ? "DOWN" : "UP";
         response["timestamp"] = millis();
         response["confidence"] = confidence;
         
@@ -239,7 +239,7 @@ void handleControlGet() {
         if (success) {
             response += "<h2 style='color: green;'>Command Executed Successfully!</h2>";
             response += "<p><strong>Command:</strong> " + command + " = " + value + "</p>";
-            response += "<p><strong>Barrier State:</strong> " + String(barrierDown ? "DOWN" : "UP") + "</p>";
+            response += "<p><strong>Brake State:</strong> " + String(brakeDown ? "DOWN" : "UP") + "</p>";
         } else {
             response += "<h2 style='color: red;'>Command Failed!</h2>";
             response += "<p>Invalid command: " + command + " = " + value + "</p>";
@@ -367,19 +367,19 @@ String generateDashboardHTML() {
         
         <div class="status-card )rawliteral";
     
-    if (barrierDown) {
+    if (brakeDown) {
         html += "status-down";
     } else {
         html += "status-up";
     }
     
     html += R"rawliteral(">
-            <h2>Barrier Status: )rawliteral";
+            <h2>Brake Status: )rawliteral";
             
-    if (barrierDown) {
-        html += "DOWN (BLOCKING)";
+    if (brakeDown) {
+        html += "DOWN (BRAKING)";
     } else {
-        html += "UP (CLEAR)";
+        html += "UP (STANDBY)";
     }
     
     html += R"rawliteral(</h2>
@@ -418,10 +418,10 @@ String generateDashboardHTML() {
         
         <div class="status-card">
             <h3>Manual Control</h3>
-            <p>Use these buttons for manual barrier control:</p>
+            <p>Use these buttons for manual brake control:</p>
             <div class="control-section">
-                <a href="/control?command=barrier&value=down" class="btn btn-danger">Lower Barrier</a>
-                <a href="/control?command=barrier&value=up" class="btn btn-success">Raise Barrier</a>
+                <a href="/control?command=brake&value=down" class="btn btn-danger">Lower Brake</a>
+                <a href="/control?command=brake&value=up" class="btn btn-success">Raise Brake</a>
             </div>
         </div>
         
@@ -465,12 +465,12 @@ bool executeCommand(String command, String value, float confidence, bool manual)
     Serial.print(value);
     Serial.println(manual ? " [MANUAL]" : " [AUTO]");
     
-    if (command == "barrier") {
+    if (command == "brake") {
         if (value == "down" || value == "DOWN") {
-            lowerBarrier(confidence, manual);
+            lowerBrake(confidence, manual);
             return true;
         } else if (value == "up" || value == "UP") {
-            raiseBarrier(manual);
+            raiseBrake(manual);
             return true;
         }
     }
@@ -479,9 +479,9 @@ bool executeCommand(String command, String value, float confidence, bool manual)
     return false;
 }
 
-void lowerBarrier(float confidence, bool manual) {
-    if (!barrierDown) {
-        Serial.print("LOWERING BARRIER");
+void lowerBrake(float confidence, bool manual) {
+    if (!brakeDown) {
+        Serial.print("LOWERING BRAKE");
         Serial.print(manual ? " [MANUAL]" : " [AUTO]");
         Serial.print(" - Confidence: ");
         Serial.print(confidence, 2);
@@ -491,54 +491,54 @@ void lowerBarrier(float confidence, bool manual) {
         soundAlert(2);
         
         // Move servo gradually for smoother operation
-        for (int angle = BARRIER_UP; angle >= BARRIER_DOWN; angle -= 5) {
-            barrierServo.write(angle);
+        for (int angle = BRAKE_UP; angle >= BRAKE_DOWN; angle -= 5) {
+            brakeServo.write(angle);
             delay(50);
         }
-        barrierServo.write(BARRIER_DOWN);
+        brakeServo.write(BRAKE_DOWN);
         
-        barrierDown = true;
+        brakeDown = true;
         
         // Update tracking
         lastCommandTime = millis();
         lastConfidence = confidence;
         totalCommands++;
-        lastCommand = "barrier=down";
+        lastCommand = "brake=down";
         lastCommand += (manual ? " (manual)" : " (auto)");
         
-        Serial.println("Barrier lowered successfully");
+        Serial.println("Brake lowered successfully");
     } else {
-        Serial.println("Barrier already down - ignoring command");
+        Serial.println("Brake already down - ignoring command");
     }
 }
 
-void raiseBarrier(bool manual) {
-    if (barrierDown) {
-        Serial.print("RAISING BARRIER");
+void raiseBrake(bool manual) {
+    if (brakeDown) {
+        Serial.print("RAISING BRAKE");
         Serial.println(manual ? " [MANUAL]" : " [AUTO]");
         
         // Sound alert (1 beep for raising)
         soundAlert(1);
         
         // Move servo gradually for smoother operation
-        for (int angle = BARRIER_DOWN; angle <= BARRIER_UP; angle += 5) {
-            barrierServo.write(angle);
+        for (int angle = BRAKE_DOWN; angle <= BRAKE_UP; angle += 5) {
+            brakeServo.write(angle);
             delay(50);
         }
-        barrierServo.write(BARRIER_UP);
+        brakeServo.write(BRAKE_UP);
         
-        barrierDown = false;
+        brakeDown = false;
         
         // Update tracking
         lastCommandTime = millis();
         lastConfidence = 0.0;
         totalCommands++;
-        lastCommand = "barrier=up";
+        lastCommand = "brake=up";
         lastCommand += (manual ? " (manual)" : " (auto)");
         
-        Serial.println("Barrier raised successfully");
+        Serial.println("Brake raised successfully");
     } else {
-        Serial.println("Barrier already up - ignoring command");
+        Serial.println("Brake already up - ignoring command");
     }
 }
 
@@ -552,10 +552,10 @@ void soundAlert(int beeps) {
 }
 
 void checkSafetyTimeout() {
-    // Safety feature: Auto-raise barrier if no command for 60 seconds
-    if (barrierDown && (millis() - lastCommandTime) > 60000) {
-        Serial.println("SAFETY TIMEOUT - Auto-raising barrier after 60 seconds");
-        raiseBarrier(false);
+    // Safety feature: Auto-raise brake if no command for 60 seconds
+    if (brakeDown && (millis() - lastCommandTime) > 60000) {
+        Serial.println("SAFETY TIMEOUT - Auto-raising brake after 60 seconds");
+        raiseBrake(false);
         lastCommand += " (SAFETY_TIMEOUT)";
     }
 }
@@ -587,8 +587,8 @@ void printPeriodicStatus() {
     static unsigned long lastStatusPrint = 0;
     
     if (millis() - lastStatusPrint > 30000) {  // Every 30 seconds
-        Serial.print("STATUS: Barrier=");
-        Serial.print(barrierDown ? "DOWN" : "UP");
+        Serial.print("STATUS: Brake=");
+        Serial.print(brakeDown ? "DOWN" : "UP");
         Serial.print(" | Commands=");
         Serial.print(totalCommands);
         Serial.print(" | Uptime=");
@@ -631,8 +631,8 @@ void loop() {
  * GND        →  Servo Brown/Black Wire, Buzzer -
  * 
  * COMMANDS:
- * HTTP POST /control: {"command": "barrier", "value": "down", "confidence": 0.85}
- * HTTP GET /control?command=barrier&value=up
+ * HTTP POST /control: {"command": "brake", "value": "down", "confidence": 0.85}
+ * HTTP GET /control?command=brake&value=up
  * 
  * FEATURES:
  * - Servo control with smooth movement
