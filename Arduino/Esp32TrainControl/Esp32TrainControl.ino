@@ -29,7 +29,7 @@ unsigned long systemStartTime = 0;
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("\nESP32 Train Controller - Simple Version");
+    Serial.println("\nESP32 Train Brake Controller");
     Serial.println("==========================================");
     
     systemStartTime = millis();
@@ -269,7 +269,7 @@ String generateDashboardHTML() {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Train Actuation Controller</title>
+    <title>Train Brake Controller</title>
     <meta http-equiv="refresh" content="5">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
@@ -362,7 +362,7 @@ String generateDashboardHTML() {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Train Actuation Controller</h1>
+            <h1>Train Brake Controller</h1>
         </div>
         
         <div class="status-card )rawliteral";

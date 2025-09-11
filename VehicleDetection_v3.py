@@ -12,15 +12,17 @@ from datetime import datetime
 import os
 
 class SmartTrainServer:
-    def __init__(self, esp32_cam_ip, esp32_train_ip, model_path):
+    def __init__(self, esp32_cam_ip, esp32_intersection_ip, esp32_train_ip, model_path):
         """
         Smart Train Level Crossing Server
         Combines ML detection, HTTP communication, and WebSocket monitoring
         """
         # Device configurations
         self.esp32_cam_ip = esp32_cam_ip
+        self.esp32_intersection_ip = esp32_intersection_ip
         self.esp32_train_ip = esp32_train_ip
         self.capture_url = f"http://{esp32_cam_ip}/capture"
+        self.intersection_status_url = f"http://{esp32_intersection_ip}/status"
         self.train_control_url = f"http://{esp32_train_ip}/control"
         
         # ML Model
@@ -459,64 +461,45 @@ class SmartTrainServer:
             return False
     
     def process_detection_logic(self, detections, confidence):
-        """Smart detection logic with consecutive detection filtering"""
         current_time = time.time()
         
-        # Add to history
-        self.detection_history.append({
-            "timestamp": current_time,
-            "bus": detections["bus"],
-            "confidence": confidence
+        # Ambil status barrier dari Intersection
+        intersection_barrier = self.get_intersection_barrier_status()
+        print(f"ℹ️ Intersection barrier: {intersection_barrier}")
+
+        action_taken = None
+
+        # Logika baru:
+        if detections["bus"] and intersection_barrier == "DOWN":
+            # Kalau ada bus dan barrier Intersection turun → brake turun
+            if self.send_command_to_train("brake", "down"):
+                action_taken = "BRAKE_LOWERED"
+                self.detection_count += 1
+        else:
+            # Kalau kondisi tidak terpenuhi → brake naik
+            if self.send_command_to_train("brake", "up"):
+                action_taken = "BRAKE_RAISED"
+
+        # Broadcast detection via WebSocket
+        self.socketio.emit('detection_update', {
+            'bus_detected': detections["bus"],
+            'confidence': confidence,
+            'timestamp': current_time,
+            'action': action_taken,
+            'barrier_state': self.barrier_state   # ini masih barrier_state internal
         })
-        
-        # Keep only recent history (last 10 seconds)
-        cutoff_time = current_time - 10
-        self.detection_history = [
-            h for h in self.detection_history 
-            if h["timestamp"] > cutoff_time
-        ]
-        
-        # Check for consecutive detections
-        if len(self.detection_history) >= self.consecutive_detections_needed:
-            recent = self.detection_history[-self.consecutive_detections_needed:]
-            consecutive_bus = all(h["bus"] for h in recent)
-            avg_confidence = np.mean([h["confidence"] for h in recent if h["bus"]] or [0])
-            
-            action_taken = None
-            
-            # Decision logic
-            if consecutive_bus and self.barrier_state == "UP" and avg_confidence > 0.6:
-                # Lower barrier
-                if self.send_command_to_train("barrier", "down"):
-                    action_taken = "BARRIER_LOWERED"
-                    self.detection_count += 1
-                    
-            elif not detections["bus"] and self.barrier_state == "DOWN":
-                # Check if no bus detected for last few frames
-                recent_no_bus = all(not h["bus"] for h in self.detection_history[-2:])
-                if recent_no_bus:
-                    if self.send_command_to_train("barrier", "up"):
-                        action_taken = "BARRIER_RAISED"
-        
-            # Broadcast detection via WebSocket
-            self.socketio.emit('detection_update', {
-                'bus_detected': detections["bus"],
-                'confidence': confidence,
-                'timestamp': current_time,
-                'action': action_taken,
-                'barrier_state': self.barrier_state
-            })
-            
-            # Update stats
-            self.socketio.emit('system_stats', {
-                'total_frames': self.total_frames_processed,
-                'bus_detections': self.detection_count,
-                'detection_count': self.detection_count
-            })
-        
+
+        # Update stats
+        self.socketio.emit('system_stats', {
+            'total_frames': self.total_frames_processed,
+            'bus_detections': self.detection_count,
+            'detection_count': self.detection_count
+        })
+
         self.current_detections = detections
         if detections["bus"]:
             self.last_detection_time = current_time
+
     
     def detection_loop(self):
         """Main detection loop running in separate thread"""
@@ -595,9 +578,20 @@ class SmartTrainServer:
         
         self.socketio.run(self.app, host=host, port=port, debug=debug)
 
+    def get_intersection_barrier_status(self):
+        try:
+            response = requests.get(self.intersection_status_url, timeout=3)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("barrier", "UNKNOWN")
+        except Exception as e:
+            print(f"❌ Intersection status error: {e}")
+        return "UNKNOWN"
+
 def main():
     # Configuration
     ESP32_CAM_IP = "192.168.1.24"        # Your ESP32-CAM IP
+    ESP32_INTERSECTION_IP = ""           # Your ESP32-Intersection IP
     ESP32_TRAIN_IP = "192.168.1.25"      # Your ESP32-Train IP  
     MODEL_PATH = "./runs/detect/train/weights/best.pt"  # Your YOLO model
     
@@ -608,7 +602,7 @@ def main():
         return
     
     # Create server
-    server = SmartTrainServer(ESP32_CAM_IP, ESP32_TRAIN_IP, MODEL_PATH)
+    server = SmartTrainServer(ESP32_CAM_IP, ESP32_INTERSECTION_IP, ESP32_TRAIN_IP, MODEL_PATH)
     
     # Test connections
     cam_ok, train_ok = server.test_connections()

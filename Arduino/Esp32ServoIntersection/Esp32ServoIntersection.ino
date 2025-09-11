@@ -1,13 +1,14 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESP32Servo.h>
+#include <ArduinoJson.h>
 
 // WiFi credentials
 const char* ssid = "ICT-LAB WORKSPACE";
 const char* password = "ICTLAB2024";
 
 // Hardware pins
-const int SERVO_PIN = 18;
+const int SERVO_PIN = 14;
 
 // Servo positions
 const int BARRIER_UP = 90;
@@ -57,7 +58,7 @@ void setup() {
     server.on("/control", HTTP_OPTIONS, handleCorsOptions);
     
     // Status endpoint
-    server.on("/status", HTTP_GET, handleStatus);
+    server.on("/status", handleStatus);
     
     // Start server
     server.begin();
@@ -153,7 +154,7 @@ void handleRoot() {
         <div class="header">
             <h1>Crossing Barrier Controller</h1>
         </div>
-        
+
         <div class="status-card )";
     
     html += barrierDown ? "status-down" : "status-up";
@@ -202,18 +203,12 @@ void handleRoot() {
 }
 
 void handleStatus() {
-    String json = "{";
-    json += "\"barrier_down\":" + String(barrierDown ? "true" : "false") + ",";
-    json += "\"barrier_state\":\"" + String(barrierDown ? "DOWN" : "UP") + "\",";
-    json += "\"last_command\":\"" + lastCommand + "\",";
-    json += "\"total_commands\":" + String(totalCommands) + ",";
-    json += "\"uptime_seconds\":" + String(millis() / 1000) + ",";
-    json += "\"free_heap\":" + String(ESP.getFreeHeap()) + ",";
-    json += "\"ip_address\":\"" + WiFi.localIP().toString() + "\"";
-    json += "}";
-    
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.send(200, "application/json", json);
+  StaticJsonDocument<200> doc;
+  doc["barrier"] = barrierDown ? "DOWN" : "UP";  // variabel barrierDown sudah ada di kode kamu
+  String response;
+  serializeJson(doc, response);
+  
+  server.send(200, "application/json", response);
 }
 
 void handleControlPost() {
