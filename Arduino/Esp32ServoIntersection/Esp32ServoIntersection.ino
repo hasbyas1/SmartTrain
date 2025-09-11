@@ -71,7 +71,7 @@ void handleRoot() {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ESP32 Servo Controller</title>
+    <title>Crossing Barrier Controller</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { 
@@ -150,7 +150,9 @@ void handleRoot() {
 </head>
 <body>
     <div class="container">
-        <h1>ESP32 Servo Controller</h1>
+        <div class="header">
+            <h1>Crossing Barrier Controller</h1>
+        </div>
         
         <div class="status-card )";
     

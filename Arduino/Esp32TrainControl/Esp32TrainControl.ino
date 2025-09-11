@@ -269,7 +269,7 @@ String generateDashboardHTML() {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ESP32 Train Controller</title>
+    <title>Train Actuation Controller</title>
     <meta http-equiv="refresh" content="5">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
@@ -362,8 +362,7 @@ String generateDashboardHTML() {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Smart Train Level Crossing</h1>
-            <h2>ESP32 Controller (Simple Version)</h2>
+            <h1>Train Actuation Controller</h1>
         </div>
         
         <div class="status-card )rawliteral";
