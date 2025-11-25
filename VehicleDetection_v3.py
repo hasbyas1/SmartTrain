@@ -53,10 +53,10 @@ class SmartTrainServer:
         self.setup_routes()
         self.setup_socketio_handlers()
         
-        print(f"🚂 Smart Train Server Initialized")
-        print(f"📷 ESP32-CAM: {esp32_cam_ip}")
-        print(f"🎛️  ESP32-Train: {esp32_train_ip}")
-        print(f"🧠 Model: {model_path}")
+        print(f"Smart Train Server Initialized")
+        print(f"ESP32-CAM: {esp32_cam_ip}")
+        print(f"ESP32-Train: {esp32_train_ip}")
+        print(f"Model: {model_path}")
     
     def setup_routes(self):
         """Setup Flask HTTP routes"""
@@ -318,19 +318,19 @@ class SmartTrainServer:
     
     def test_connections(self):
         """Test connections to both ESP32 devices"""
-        print("🔧 Testing device connections...")
+        print("Testing device connections...")
         
         # Test ESP32-CAM
         try:
             response = requests.get(self.capture_url, timeout=5)
             if response.status_code == 200:
-                print("✅ ESP32-CAM connection successful!")
+                print("ESP32-CAM connection successful!")
                 cam_ok = True
             else:
-                print("❌ ESP32-CAM connection failed!")
+                print("ESP32-CAM connection failed!")
                 cam_ok = False
         except Exception as e:
-            print(f"❌ ESP32-CAM error: {e}")
+            print(f"ESP32-CAM error: {e}")
             cam_ok = False
         
         # Test ESP32-Train
@@ -338,11 +338,11 @@ class SmartTrainServer:
             response = requests.get(f"http://{self.esp32_train_ip}/status", timeout=5)
             train_ok = response.status_code == 200
             if train_ok:
-                print("✅ ESP32-Train connection successful!")
+                print("ESP32-Train connection successful!")
             else:
-                print("❌ ESP32-Train connection failed!")
+                print("ESP32-Train connection failed!")
         except Exception as e:
-            print(f"❌ ESP32-Train error: {e}")
+            print(f"ESP32-Train error: {e}")
             train_ok = False
         
         return cam_ok, train_ok
@@ -447,7 +447,7 @@ class SmartTrainServer:
             )
             
             if response.status_code == 200:
-                print(f"✅ Command sent: {command}={value}")
+                print(f"Command sent: {command}={value}")
                 self.last_command_sent = f"{command}={value}"
                 if command == "barrier":
                     self.barrier_state = value.upper()
@@ -465,7 +465,7 @@ class SmartTrainServer:
         
         # Ambil status barrier dari Intersection
         intersection_barrier = self.get_intersection_barrier_status()
-        print(f"ℹ️ Intersection barrier: {intersection_barrier}")
+        print(f"ℹIntersection barrier: {intersection_barrier}")
 
         action_taken = None
 
@@ -503,7 +503,7 @@ class SmartTrainServer:
     
     def detection_loop(self):
         """Main detection loop running in separate thread"""
-        print("🚀 Starting detection loop...")
+        print("Starting detection loop...")
         
         # Setup OpenCV window
         window_name = "Smart Train - Live Detection"
@@ -528,14 +528,14 @@ class SmartTrainServer:
                     
                     # Display info in console
                     if detections["bus"]:
-                        print(f"🚌 Bus detected! Confidence: {confidence:.2f}")
+                        print(f"Bus detected! Confidence: {confidence:.2f}")
                     elif detections["car"]:
-                        print(f"🚗 Car detected! Confidence: {confidence:.2f}")
+                        print(f"Car detected! Confidence: {confidence:.2f}")
                     
                     # Check for quit key
                     key = cv2.waitKey(1) & 0xFF
                     if key == ord('q'):
-                        print("🛑 'q' pressed - stopping detection")
+                        print("'q' pressed - stopping detection")
                         self.detection_running = False
                         break
                     elif key == ord('s'):
@@ -543,7 +543,7 @@ class SmartTrainServer:
                         timestamp = int(time.time())
                         filename = f"detection_screenshot_{timestamp}.jpg"
                         cv2.imwrite(filename, annotated_frame)
-                        print(f"📸 Screenshot saved: {filename}")
+                        print(f"Screenshot saved: {filename}")
                 
                 time.sleep(0.1)  # 10 FPS
                 
@@ -553,7 +553,7 @@ class SmartTrainServer:
         
         # Cleanup
         cv2.destroyAllWindows()
-        print("🛑 Detection loop stopped")
+        print("Detection loop stopped")
     
     def start_detection_loop(self):
         """Start detection in separate thread"""
@@ -561,20 +561,20 @@ class SmartTrainServer:
             self.detection_running = True
             self.detection_thread = threading.Thread(target=self.detection_loop, daemon=True)
             self.detection_thread.start()
-            print("✅ Detection started")
+            print("Detection started")
     
     def stop_detection_loop(self):
         """Stop detection loop"""
         self.detection_running = False
         if self.detection_thread:
             self.detection_thread.join(timeout=2)
-        print("⏹️ Detection stopped")
+        print("Detection stopped")
     
     def run_server(self, host='0.0.0.0', port=5000, debug=False):
         """Run the Flask-SocketIO server"""
-        print(f"\n🌐 Starting Smart Train Server on http://{host}:{port}")
-        print(f"📊 Dashboard: http://{host}:{port}")
-        print(f"🔌 WebSocket: ws://{host}:{port}")
+        print(f"\nStarting Smart Train Server on http://{host}:{port}")
+        print(f"Dashboard: http://{host}:{port}")
+        print(f"WebSocket: ws://{host}:{port}")
         
         self.socketio.run(self.app, host=host, port=port, debug=debug)
 
@@ -585,19 +585,19 @@ class SmartTrainServer:
                 data = response.json()
                 return data.get("barrier", "UNKNOWN")
         except Exception as e:
-            print(f"❌ Intersection status error: {e}")
+            print(f"Intersection status error: {e}")
         return "UNKNOWN"
 
 def main():
     # Configuration
-    ESP32_CAM_IP = "192.168.1.41"       # Your ESP32-CAM IP
-    ESP32_INTERSECTION_IP = "192.168.1.179"     # Your ESP32-Intersection IP
-    ESP32_TRAIN_IP = "192.168.1.229"        # Your ESP32-Train IP  
+    ESP32_CAM_IP = "192.168.1.177"       # Your ESP32-CAM IP
+    ESP32_INTERSECTION_IP = "192.168.1.26"     # Your ESP32-Intersection IP
+    ESP32_TRAIN_IP = "192.168.1.27"        # Your ESP32-Train IP  
     MODEL_PATH = "./runs/detect/train/weights/best.pt"  # Your YOLO model
     
     # Verify model exists
     if not os.path.exists(MODEL_PATH):
-        print(f"❌ Model file not found: {MODEL_PATH}")
+        print(f"Model file not found: {MODEL_PATH}")
         print("Please check the path to your YOLO model file")
         return
     
@@ -607,9 +607,9 @@ def main():
     # Test connections
     cam_ok, train_ok = server.test_connections()
     if not cam_ok:
-        print("⚠️  ESP32-CAM not connected - some features may not work")
+        print("ESP32-CAM not connected - some features may not work")
     if not train_ok:
-        print("⚠️  ESP32-Train not connected - manual control only")
+        print("ESP32-Train not connected - manual control only")
     
     # Start detection automatically if camera is available
     if cam_ok:
@@ -619,7 +619,7 @@ def main():
     try:
         server.run_server(port=5000, debug=False)
     except KeyboardInterrupt:
-        print("\n🛑 Shutting down server...")
+        print("\nShutting down server...")
         server.stop_detection_loop()
 
 if __name__ == "__main__":

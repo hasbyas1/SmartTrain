@@ -4,7 +4,7 @@
     "paragraph": "From vision to reality, our cutting-edge Smart Train project is accelerating into the future of intelligent transportation. Designed to revolutionize the way we experience rail travel, this initiative harnesses the power of artificial intelligence and computer vision to enhance safety, efficiency, and sustainability across every level of the rail system. "
   },
   "About": {
-    "paragraph": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    "paragraph": "Here, you'll see the public camera view from accross the land. These cameras are installed at railway crossings to monitor and detect any obstacles or vehicles that may be present on the tracks. The camera feed is processed using advanced computer vision method and techniques to identify and classify objects in real-time, allowing for quick and accurate detection of potential hazards. This information can then be used to trigger safety measures, such as activating warning signals or stopping approaching trains, to prevent accidents and ensure the safety of both train passengers and road users.",
     "Why": [
       "Lorem ipsum dolor",
       "Tempor incididunt",
@@ -133,12 +133,12 @@
     {
       "img": "img/team/eka.png",
       "name": "Eka Fajar R",
-      "job": "Material"
+      "job": "Material & Train Design Engineer"
     },
     {
       "img": "img/team/hasbi.png",
       "name": "Muhammad Hasby A",
-      "job": "AI engginer"
+      "job": "Camera & AI Engineer"
     },
     {
       "img": "img/team/dzakiyya.png",
@@ -146,7 +146,7 @@
       "job": "Website Developer"
     },
     {
-      "img": "img/team/",
+      "img": "img/team/fariz.png",
       "name": "Muhammad Fariz A",
       "job": "Project Manager"
     },
@@ -163,7 +163,7 @@
     "facebook": "fb.com",
     "twitter": "twitter.com",
     "youtube": "youtube.com",
-    "instagram": "i.will24"
+    "instagram": "@i.will24"
   },
   "Features": [
     {

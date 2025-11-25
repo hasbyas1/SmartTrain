@@ -25,13 +25,15 @@ const char* password = "11011011";
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-// Servo control
-#define SERVO_PIN         14
+// Servo control - Dua servo untuk palang dua arah
+#define SERVO_PIN_1       14
+#define SERVO_PIN_2       15  // Pin baru untuk servo kedua
 const int BARRIER_UP = 90;
 const int BARRIER_DOWN = 0;
 
 httpd_handle_t stream_httpd = NULL;
-Servo barrierServo;
+Servo barrierServo1;
+Servo barrierServo2;
 bool barrierDown = false;
 
 // Minimal stream handler
@@ -86,7 +88,7 @@ static esp_err_t stream_handler(httpd_req_t *req) {
             _jpg_buf = NULL;
         }
 
-        vTaskDelay(pdMS_TO_TICKS(100)); // Slower frame rate
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 
     if (fb) esp_camera_fb_return(fb);
@@ -114,11 +116,13 @@ static esp_err_t control_handler(httpd_req_t *req) {
     char query[64];
     if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
         if (strstr(query, "down")) {
-            barrierServo.write(BARRIER_DOWN);
+            barrierServo1.write(BARRIER_DOWN);
+            barrierServo2.write(BARRIER_DOWN);
             barrierDown = true;
             httpd_resp_send(req, "DOWN", 4);
         } else if (strstr(query, "up")) {
-            barrierServo.write(BARRIER_UP);
+            barrierServo1.write(BARRIER_UP);
+            barrierServo2.write(BARRIER_UP);
             barrierDown = false;
             httpd_resp_send(req, "UP", 2);
         } else {
@@ -134,12 +138,14 @@ static esp_err_t control_handler(httpd_req_t *req) {
         if (ret > 0) {
             buf[ret] = '\0';
             if (strstr(buf, "down")) {
-                barrierServo.write(BARRIER_DOWN);
+                barrierServo1.write(BARRIER_DOWN);
+                barrierServo2.write(BARRIER_DOWN);
                 barrierDown = true;
                 httpd_resp_set_type(req, "application/json");
                 httpd_resp_send(req, "{\"status\":\"DOWN\"}", 17);
             } else if (strstr(buf, "up")) {
-                barrierServo.write(BARRIER_UP);
+                barrierServo1.write(BARRIER_UP);
+                barrierServo2.write(BARRIER_UP);
                 barrierDown = false;
                 httpd_resp_set_type(req, "application/json");
                 httpd_resp_send(req, "{\"status\":\"UP\"}", 15);
@@ -160,18 +166,78 @@ static esp_err_t status_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
-// Ultra minimal index
+// Enhanced index with AJAX for no-reload control
 static esp_err_t index_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "text/html");
-    httpd_resp_send_chunk(req, "<html><head><title>ESP32-CAM</title></head><body>", -1);
-    httpd_resp_send_chunk(req, "<h1>ESP32-CAM + Servo</h1>", -1);
-    httpd_resp_send_chunk(req, "<p><a href='/stream'>Stream</a> | <a href='/capture'>Capture</a></p>", -1);
-    httpd_resp_send_chunk(req, "<p>Barrier: ", -1);
-    httpd_resp_send_chunk(req, barrierDown ? "DOWN" : "UP", -1);
-    httpd_resp_send_chunk(req, "</p>", -1);
-    httpd_resp_send_chunk(req, "<p><a href='/control?cmd=up'>UP</a> | <a href='/control?cmd=down'>DOWN</a></p>", -1);
-    httpd_resp_send_chunk(req, "</body></html>", -1);
-    httpd_resp_send_chunk(req, NULL, 0);
+    const char* html = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ESP32-CAM Railway Crossing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; text-align: center; margin: 20px; }
+        h1 { color: #333; }
+        .status { font-size: 24px; margin: 20px; padding: 10px; }
+        .status.up { color: green; }
+        .status.down { color: red; }
+        button { 
+            font-size: 18px; 
+            padding: 15px 30px; 
+            margin: 10px; 
+            cursor: pointer;
+            border-radius: 5px;
+            border: 2px solid #333;
+        }
+        .btn-up { background: #90EE90; }
+        .btn-down { background: #FFB6C6; }
+        a { display: inline-block; margin: 10px; text-decoration: none; color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Railway Crossing Control</h1>
+    <p><a href='/stream' target='_blank'>Open Stream</a> | <a href='/capture' target='_blank'>Capture Photo</a></p>
+    
+    <div id="statusDiv" class="status up">Barrier Status: <span id="statusText">UP</span></div>
+    
+    <div>
+        <button class="btn-up" onclick="controlBarrier('up')">BARRIER UP</button>
+        <button class="btn-down" onclick="controlBarrier('down')">BARRIER DOWN</button>
+    </div>
+    
+    <script>
+        function updateStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    const statusDiv = document.getElementById('statusDiv');
+                    const statusText = document.getElementById('statusText');
+                    if (data.barrier === 'DOWN') {
+                        statusText.textContent = 'DOWN';
+                        statusDiv.className = 'status down';
+                    } else {
+                        statusText.textContent = 'UP';
+                        statusDiv.className = 'status up';
+                    }
+                });
+        }
+        
+        function controlBarrier(cmd) {
+            fetch('/control?cmd=' + cmd)
+                .then(() => {
+                    setTimeout(updateStatus, 500);
+                });
+        }
+        
+        // Update status every 2 seconds
+        setInterval(updateStatus, 2000);
+        updateStatus();
+    </script>
+</body>
+</html>
+)rawliteral";
+    
+    httpd_resp_send(req, html, HTTPD_RESP_USE_STRLEN);
     return ESP_OK;
 }
 
@@ -179,9 +245,9 @@ void startCameraServer() {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
     config.task_priority = 5;
-    config.stack_size = 3072;  // Even smaller stack
+    config.stack_size = 3072;
     config.max_uri_handlers = 6;
-    config.max_open_sockets = 3;  // Limit connections
+    config.max_open_sockets = 3;
 
     if (httpd_start(&stream_httpd, &config) != ESP_OK) {
         Serial.println("Failed to start server");
@@ -207,15 +273,17 @@ void startCameraServer() {
 void setup() {
     Serial.begin(115200);
     delay(1000);
-    Serial.println("Starting ESP32-CAM with Servo...");
+    Serial.println("Starting ESP32-CAM Railway Crossing System...");
 
-    // Initialize servo first
-    barrierServo.attach(SERVO_PIN);
-    barrierServo.write(BARRIER_UP);
+    // Initialize both servos
+    barrierServo1.attach(SERVO_PIN_1);
+    barrierServo2.attach(SERVO_PIN_2);
+    barrierServo1.write(BARRIER_UP);
+    barrierServo2.write(BARRIER_UP);
     barrierDown = false;
     delay(500);
 
-    // Camera config - use smaller frame size
+    // Camera config
     camera_config_t config;
     config.ledc_channel = LEDC_CHANNEL_0;
     config.ledc_timer = LEDC_TIMER_0;
@@ -237,9 +305,9 @@ void setup() {
     config.pin_reset = RESET_GPIO_NUM;
     config.xclk_freq_hz = 20000000;
     config.pixel_format = PIXFORMAT_JPEG;
-    config.frame_size = FRAMESIZE_QVGA;  // Start small 320x240
-    config.jpeg_quality = 15;  // Lower quality = less memory
-    config.fb_count = 1;  // Single buffer
+    config.frame_size = FRAMESIZE_QVGA;
+    config.jpeg_quality = 15;
+    config.fb_count = 1;
 
     esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK) {
@@ -262,7 +330,6 @@ void setup() {
     Serial.print("Ready! Go to: http://");
     Serial.println(WiFi.localIP());
     
-    // Print memory info
     Serial.printf("Free heap: %d bytes\n", ESP.getFreeHeap());
 }
 

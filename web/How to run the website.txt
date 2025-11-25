@@ -1,0 +1,26 @@
+Requirements: Upload all the required Arduino programs (check '../Arduino/Important Codes.txt' for the required program to upload)
+
+1. Open VSCode
+2. Make sure Node/Express installed
+3. Make sure React installed
+
+4. DON'T FORGET TO START THE LARAGON SERVER (APACHE + MYSQL)
+5. Put your Esp32-CAM stream URL/Link in 'web/backend/.env' (URL can be obtained from the Arduino Programs)
+
+6. Terminal
+7. cd/web/backend
+8. "nodemon index" in terminal
+
+9. New Terminal
+10. cd/web/frontend
+11. "npm start" in terminal
+12. You'll obtain an local IP's or URL which leads to website that've been made. It'll be something like this in the terminal:
+
+# Local:            http://localhost:3000
+# On Your Network:  http://192.168.56.1:3000 <------------ Pick this URL (Change 3000 into 5000)
+
+13. You'll need that URL of "On Your Network" and will use it on 'web/frontend/.env' for docker (it's like duplicating your website's URL or HTTP API (If this isn't done yet, the live view of the camera won't be shown)
+
+14. As I said... paste the URL of 'On Your Network' and paste it on the second line of the code: REACT_APP_API_URL= http://192.168.12.3:5000
+
+15. Done

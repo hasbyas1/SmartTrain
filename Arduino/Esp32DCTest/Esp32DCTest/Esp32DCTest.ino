@@ -8,12 +8,8 @@ const char* ssid = "ICT-LAB WORKSPACE";
 const char* password = "ICTLAB2024";
 
 // Hardware pins
-const int SERVO_PIN = 12;
-const int BUZZER_PIN = 14;  // Optional
+const int BUZZER_PIN = 4;  // Optional
 
-// Servo positions
-const int BRAKE_UP = 90;      // Degrees for brake up
-const int BRAKE_DOWN = 0;     // Degrees for brake down
 
 // Global objects
 WebServer server(80);

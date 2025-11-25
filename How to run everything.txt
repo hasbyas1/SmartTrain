@@ -8,6 +8,7 @@ Requirements:
 - Micro USB Cable(x2)
 
 1. Upload the [Esp32CamAccess.ino] to ESP32 CAM. See [How to upload code to ESP32 Cam.txt] in the Arduino folder for instructions
-2. Upload the [Esp32TrainControl.ino] to ESP32 CAM. See [How to upload code to ESP32 Train.txt] in the Arduino folder for instructions
+2. Upload the [Esp32TrainControl.ino] to ESP32. See [How to upload code to ESP32 Train.txt] in the Arduino folder for instructions
 3. Edit the [VehicleDetection_v2.py] and change the API IP address of the ESP32 Camera & the ESP32 Train using any text code editor. We recommend Visual Studio Code
 4. In the Visual Studio Code, select the dropdown button right next to the [Run] Button (the symbol is the Play button) and select "Run Python File"
+5. If you wanna run or start the webste, go to the './web/' for the instructions
