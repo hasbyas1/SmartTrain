@@ -597,7 +597,7 @@ class SmartTrainServer:
 
 def main():
     # Configuration
-    ESP32_CAM_IP = "192.168.1.177"        # Your ESP32-CAM IP
+    ESP32_CAM_IP = "192.168.1.31"        # Your ESP32-CAM IP
     ESP32_TRAIN_IP = "192.168.1.25"      # Your ESP32-Train IP  
     MODEL_PATH = "./runs/detect/train/weights/best.pt"  # Your YOLO model
     

@@ -5,8 +5,8 @@
 // ==================================================
 // KONFIGURASI WIFI & HIVEMQ
 // ==================================================
-const char* ssid        = "EsDehidrasiHouse";
-const char* password    = "11011011";
+const char* ssid        = "ICT-LAB WORKSPACE";
+const char* password    = "ICTLAB2024";
 
 // Detail dari Dashboard HiveMQ Cloud
 const char* mqtt_server = "9e108cb03c734f0394b0f0b49508ec1e.s1.eu.hivemq.cloud";
@@ -28,10 +28,10 @@ const int PIN_IR_5 = 35; // Titik 5 (Finish - Input Only)
 // ==================================================
 // KONFIGURASI JARAK (CM)
 // ==================================================
-const float jarak_1_ke_2 = 20.0; 
-const float jarak_2_ke_3 = 20.0;
-const float jarak_3_ke_4 = 20.0; 
-const float jarak_4_ke_5 = 20.0; 
+const float jarak_1_ke_2 = 96.0; 
+const float jarak_2_ke_3 = 97.0;
+const float jarak_3_ke_4 = 80.0; 
+const float jarak_4_ke_5 = 96.0; 
 
 // Variabel Waktu
 unsigned long t1 = 0;
