@@ -95,7 +95,7 @@ void soundBuzzer() {
     }
 }
 
-// MQTT callback function
+// MQTT callback function (Respons dan kontrol MQTT)
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
     String message = "";
     for (unsigned int i = 0; i < length; i++) {
@@ -216,14 +216,15 @@ static esp_err_t capture_handler(httpd_req_t *req) {
     return res;
 }
 
-// Simple control handler
+// Simple control handler (Respons dan kontrol HTTP Web)
 static esp_err_t control_handler(httpd_req_t *req) {
     char query[64];
     if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
         if (strstr(query, "down")) {
-            soundBuzzer();  // Buzzer berbunyi dulu
-            barrierServo1.write(BARRIER_DOWN);
-            barrierServo2.write(BARRIER_DOWN);
+            // Dijadikan comment agar tidak perulangan (HTTP kontrol, lalu MQTT)
+            // soundBuzzer();  // Buzzer berbunyi dulu
+            // barrierServo1.write(BARRIER_DOWN);
+            // barrierServo2.write(BARRIER_DOWN);
             barrierDown = true;
             
             // Publish to MQTT
@@ -231,9 +232,10 @@ static esp_err_t control_handler(httpd_req_t *req) {
             
             httpd_resp_send(req, "DOWN", 4);
         } else if (strstr(query, "up")) {
-            soundBuzzer();  // Buzzer berbunyi dulu
-            barrierServo1.write(BARRIER_UP);
-            barrierServo2.write(BARRIER_UP);
+            // Dijadikan comment agar tidak perulangan (HTTP kontrol, lalu MQTT)
+            // soundBuzzer();  // Buzzer berbunyi dulu
+            // barrierServo1.write(BARRIER_UP);
+            // barrierServo2.write(BARRIER_UP);
             barrierDown = false;
             
             // Publish to MQTT
