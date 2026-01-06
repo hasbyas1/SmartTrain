@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 export default function SignUp() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: "",
+    name: "", // Ubah dari username ke name
     email: "",
     password: "",
   });
@@ -84,21 +84,21 @@ export default function SignUp() {
 
           <div>
             <label
-              htmlFor="username"
+              htmlFor="name"
               className="block text-sm font-medium text-gray-700"
             >
               Name
             </label>
             <input
-              id="username"
-              name="username"
+              id="name"
+              name="name"
               type="text"
-              autoComplete="off"
+              autoComplete="name"
               required
-              value={formData.username}
+              value={formData.name}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
-              placeholder="Enter your username"
+              placeholder="Enter your name"
             />
           </div>
           

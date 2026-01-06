@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `smart_train`
+-- Database: `smart_train_newsmart_train_newsmart_train_new`
 --
 
 -- --------------------------------------------------------

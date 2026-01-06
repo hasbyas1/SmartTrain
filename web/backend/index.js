@@ -22,23 +22,49 @@ app.get("/", (req, res) => {
 
 // Register
 app.post("/auth/register", async (req, res, next) => {
-  const { email, username, password } = req.body;
+  console.log("=== REGISTER REQUEST ===");
+  console.log("Body received:", req.body);
+  
+  const { email, name, password } = req.body;
+  
+  if (!email || !name || !password) {
+    return res.status(400).json({ 
+      message: "Email, name, and password are required" 
+    });
+  }
+  
   try {
+    console.log("Hashing password...");
     const hashedPassword = await bcrypt.hash(password, 10);
-    await User.create({ email, username, password: hashedPassword });
+    
+    console.log("Creating user with data:", { email, name, hasPassword: !!hashedPassword });
+    const newUser = await User.create({ 
+      email, 
+      name, 
+      password: hashedPassword 
+    });
+    
+    console.log("✅ User created successfully! ID:", newUser.id);
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
+    console.error("❌ REGISTRATION ERROR:");
+    console.error("- Error name:", error.name);
+    console.error("- Error message:", error.message);
+    console.error("- SQL:", error.sql);
+    console.error("- Original code:", error.original?.code);
+    console.error("- Original errno:", error.original?.errno);
+    console.error("- Original sqlMessage:", error.original?.sqlMessage);
     next(error);
   }
 });
 
-// Login
+// Login tetap sama (tidak perlu diubah karena hanya menggunakan email dan password)
 app.post("/auth/login", async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ where: { email } });
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
