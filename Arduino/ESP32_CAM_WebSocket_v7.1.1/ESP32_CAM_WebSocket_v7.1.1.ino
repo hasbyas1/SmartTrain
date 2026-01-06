@@ -6,11 +6,11 @@
  * Device: ESP32-CAM AI-Thinker
  * 
  * UPDATE v3.0:
- * - ✅ WebSocket server untuk real-time frame streaming
- * - ✅ Latency ultra-low (~50-100ms vs HTTP ~200-500ms)
- * - ✅ Two-way communication support
- * - ✅ Maintain MQTT IP publishing
- * - ✅ Backward compatible dengan HTTP endpoints
+ * - WebSocket server untuk real-time frame streaming
+ * - Latency ultra-low (~50-100ms vs HTTP ~200-500ms)
+ * - Two-way communication support
+ * - Maintain MQTT IP publishing
+ * - Backward compatible dengan HTTP endpoints
  * 
  * FUNGSI:
  * - WebSocket Server untuk real-time video streaming
@@ -55,8 +55,8 @@ const char* password_primary = "11011011";
 const char* ssid_backup1 = "EsDehidrasi";
 const char* password_backup1 = "11011011";
 
-const char* ssid_backup2 = "Asep apandi";
-const char* password_backup2 = "ROGES123";
+const char* ssid_backup2 = "ICT-LAB WORKSPACE";
+const char* password_backup2 = "ICTLAB2024";
 
 const int WIFI_RETRY_DELAY = 500;
 const int WIFI_MAX_RETRY = 10;

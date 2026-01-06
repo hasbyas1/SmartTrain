@@ -5,8 +5,8 @@
 #include <PubSubClient.h>     
 #include "time.h"
 
-const char* ssid       = "EsDehidrasi";
-const char* password   = "11011011";
+const char* ssid       = "ICT-LAB WORKSPACE";
+const char* password   = "ICTLAB2024";
 
 const char* mqtt_server = "737108d634bf4569a5322be25537a876.s1.eu.hivemq.cloud"; 
 const int   mqtt_port   = 8883;

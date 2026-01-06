@@ -6,9 +6,9 @@
  * Device: ESP32-CAM AI-Thinker
  * 
  * UPDATE v2.1:
- * - ✅ Publish IP saat pertama connect MQTT
- * - ✅ Re-publish IP setiap 10 detik (periodic)
- * - ✅ Re-publish IP saat reconnect MQTT
+ * - Publish IP saat pertama connect MQTT
+ * - Re-publish IP setiap 10 detik (periodic)
+ * - Re-publish IP saat reconnect MQTT
  * 
  * FUNGSI:
  * - HTTP Server untuk video streaming & snapshot
@@ -83,8 +83,8 @@ const char* password_primary = "11011011";
 const char* ssid_backup1 = "EsDehidrasi";
 const char* password_backup1 = "11011011";
 
-const char* ssid_backup2 = "Fore Guest";
-const char* password_backup2 = "Foreveryone";
+const char* ssid_backup2 = "ICT-LAB WORKSPACE";
+const char* password_backup2 = "ICTLAB2024";
 
 // WiFi retry configuration
 const int WIFI_RETRY_DELAY = 500;   // 500ms per retry

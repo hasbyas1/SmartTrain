@@ -1,9 +1,0 @@
-1. Esp32CamAccess (HTTP)
-2. Esp32CamAccess_ServoDouble2 (HTTP)
-3. Esp32CamAccess_ServoDouble3 (not yet, it'll be HTTP & MQTT on servo)
-4. Esp32IRCheckpoints (MQTT)
-5. Esp32TrainControl (HTTP, outdated, still using servo not motor driver)
-
-
-6. Esp32CamAccess_withSleep_2
-7. Esp32_Controller_2
