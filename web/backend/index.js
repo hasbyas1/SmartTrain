@@ -8,6 +8,7 @@ require("dotenv").config();
 
 const authMiddleware = require("./middlewares/authmiddleware");
 const autoResync = require("./middlewares/errmiddleware");
+const mqttClient = require("./mqtt"); // ✅ Import MQTT Client
 
 const app = express();
 const clients = [];
@@ -15,10 +16,24 @@ const clients = [];
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// ==========================================
+// 🏠 HOME ROUTE
+// ==========================================
 app.get("/", (req, res) => {
-  res.status(201).json({ message: "Halo dari API Smart-Train" });
+  res.status(201).json({ 
+    message: "Halo dari API Smart-Train Unified Backend",
+    endpoints: {
+      auth: ["/auth/register", "/auth/login", "/auth/user/:id"],
+      train: ["/train/latest", "/train/realtime", "/train-speed/history"],
+      palang: ["/palang", "/palang/update"],
+      camera: ["/camera", "/camera/update"]
+    }
+  });
 });
+
+// ==========================================
+// 🔐 AUTHENTICATION ROUTES
+// ==========================================
 
 // Register
 app.post("/auth/register", async (req, res, next) => {
@@ -34,6 +49,12 @@ app.post("/auth/register", async (req, res, next) => {
   }
   
   try {
+    // Check if email already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
     console.log("Hashing password...");
     const hashedPassword = await bcrypt.hash(password, 10);
     
@@ -58,140 +79,252 @@ app.post("/auth/register", async (req, res, next) => {
   }
 });
 
-// Login tetap sama (tidak perlu diubah karena hanya menggunakan email dan password)
+// Login
 app.post("/auth/login", async (req, res, next) => {
   const { email, password } = req.body;
+  
   try {
     const user = await User.findOne({ where: { email } });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-    res.json({ token });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Me
-app.get("/auth/user", authMiddleware, async (req, res, next) => {
-  try {
-    const user = await User.findByPk(req.userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ user });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// List Users (hanya yang login bisa akses)
-app.get("/users", authMiddleware, async (req, res, next) => {
-  try {
-    const users = await User.findAll();
-    res.json({ users });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 🚀 Live Streaming Proxy (multi client)
-// Men-"copy" server yang ada di ESP 32-CAM ke banyak client agar tidak overload (bisa diakses banyak client)
-app.get("/stream", (req, res) => {
-  res.writeHead(200, {
-    "Content-Type": cameraContentType, // pakai content-type dari kamera
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-    Pragma: "no-cache",
-  });
-
-  clients.push(res);
-
-  req.on("close", () => {
-    const idx = clients.indexOf(res);
-    if (idx !== -1) clients.splice(idx, 1);
-  });
-});
-
-let cameraContentType = "multipart/x-mixed-replace; boundary=frame"; // default
-let cameraStream;
-let latestFrame = null;
-
-// Relay 1 koneksi dari kamera
-async function startRelay() {
-  const camUrl = process.env.CAMERA_URL; // MJPEG stream
-
-  try {
-    const response = await axios.get(camUrl, { responseType: "stream" });
-
-    // simpan Content-Type dari kamera (supaya boundary cocok)
-    if (response.headers["content-type"]) {
-      cameraContentType = response.headers["content-type"];
+    
+    if (!user) {
+      return res.status(401).json({ message: "Email not found" });
     }
 
-    let buffer = Buffer.alloc(0);
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ message: "Wrong password" });
+    }
 
-    cameraStream = response.data;
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user.id, email: user.email, name: user.name },
+      process.env.JWT_SECRET || "SUPER_SECRET_JWT_UBAH_INI",
+      { expiresIn: "7d" }
+    );
 
-    // broadcast chunk ke semua client
-    cameraStream.on("data", (chunk) => {
-      buffer = Buffer.concat([buffer, chunk]);
+    res.json({
+      accessToken: token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("❌ LOGIN ERROR:", error);
+    next(error);
+  }
+});
 
-      // cari marker JPEG start (FFD8) dan end (FFD9)
-      const start = buffer.indexOf(Buffer.from([0xff, 0xd8]));
-      const end = buffer.indexOf(Buffer.from([0xff, 0xd9]));
-
-      if (start !== -1 && end !== -1 && end > start) {
-        // ambil 1 frame utuh
-        const frame = buffer.slice(start, end + 2);
-
-        latestJPEG = frame; // simpan untuk /capture
-
-        // sisakan buffer setelah frame
-        buffer = buffer.slice(end + 2);
-      }
-
-      // broadcast chunk ke client stream
-      clients.forEach((res) => res.write(chunk));
+// Get User by ID
+app.get("/auth/user/:id", async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] }
     });
 
-    cameraStream.on("end", () => {
-      console.log("Camera stream ended, reconnecting in 3s...");
-      setTimeout(startRelay, 3000);
-    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    cameraStream.on("error", (err) => {
-      console.error("Camera stream error:", err.message);
-      setTimeout(startRelay, 3000);
-    });
+    res.json(user);
+  } catch (error) {
+    console.error("❌ GET USER ERROR:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// ==========================================
+// 🚆 TRAIN SPEED ROUTES
+// ==========================================
+
+// Get Latest Train Speed
+app.get("/train/latest", async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(
+      "SELECT * FROM train_speed ORDER BY id DESC LIMIT 1"
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "No data found" });
+    }
+    
+    res.json(rows[0]);
   } catch (err) {
-    console.error("Failed to connect camera:", err.message);
-    setTimeout(startRelay, 3000);
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
   }
-}
-
-// Endpoint capture → ambil frame terakhir
-app.get("/capture", (req, res) => {
-  if (!latestJPEG) {
-    return res.status(503).json({ message: "No frame available yet" });
-  }
-
-  res.set("Content-Type", "image/jpeg");
-  res.set("Content-Disposition", "inline; filename=capture.jpg");
-  res.set("Access-Control-Allow-Origin", "*");
-
-  res.send(latestJPEG);
 });
 
+// Get Train Speed History with Time Filter
+app.get("/train-speed/history", async (req, res) => {
+  const { filter } = req.query;
 
+  let condition = "";
 
-startRelay().catch(console.error);
+  switch (filter) {
+    case "1m":
+      condition = "created_at >= NOW() - INTERVAL 1 MINUTE AND DATE(created_at) = CURDATE()";
+      break;
+    case "5m":
+      condition = "created_at >= NOW() - INTERVAL 5 MINUTE AND DATE(created_at) = CURDATE()";
+      break;
+    case "10m":
+      condition = "created_at >= NOW() - INTERVAL 10 MINUTE AND DATE(created_at) = CURDATE()";
+      break;
+    case "30m":
+      condition = "created_at >= NOW() - INTERVAL 30 MINUTE AND DATE(created_at) = CURDATE()";
+      break;
+    default:
+      condition = "created_at >= NOW() - INTERVAL 5 MINUTE AND DATE(created_at) = CURDATE()";
+  }
 
-// Error handler untuk auto-resync
+  try {
+    const [rows] = await sequelize.query(`
+      SELECT speed, created_at
+      FROM train_speed
+      WHERE ${condition}
+      ORDER BY created_at ASC
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB Error" });
+  }
+});
+
+// Get Realtime Train Speed
+app.get("/train/realtime", async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(`
+      SELECT 
+        segment,
+        speed,
+        DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at
+      FROM train_speed_realtime
+      ORDER BY id DESC
+      LIMIT 30
+    `);
+
+    res.json(rows.reverse());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB Error" });
+  }
+});
+
+// ==========================================
+// 🚧 PALANG (BARRIER) ROUTES
+// ==========================================
+
+// Get Latest Palang Status
+app.get("/palang", async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(
+      "SELECT * FROM palang ORDER BY id DESC LIMIT 1"
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "No palang data found" });
+    }
+    
+    // Return as array for Flutter compatibility
+    res.json([rows[0]]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Update Palang Status via MQTT
+app.post("/palang/update", async (req, res) => {
+  const { status } = req.body;
+  
+  console.log(`📤 Publishing palang status: ${status}`);
+  mqttClient.publish("smartTrain/barrier", JSON.stringify({ status }));
+  
+  res.json({ success: true });
+});
+
+// ==========================================
+// 📸 CAMERA ROUTES
+// ==========================================
+
+// Get Latest Camera Status
+app.get("/camera", async (req, res) => {
+  try {
+    const [rows] = await sequelize.query(
+      "SELECT * FROM camera ORDER BY id DESC LIMIT 1"
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "No camera data found" });
+    }
+    
+    // Return as array for Flutter compatibility
+    res.json([rows[0]]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// Update Camera Status via MQTT
+app.post("/camera/update", async (req, res) => {
+  const { status } = req.body;
+  
+  console.log(`📤 Publishing camera status: ${status}`);
+  mqttClient.publish("smartTrain/camera", JSON.stringify({ status }));
+  
+  res.json({ success: true });
+});
+
+// ==========================================
+// 🎥 ESP32-CAM STREAM ROUTE (if needed)
+// ==========================================
+app.get("/camera/stream", async (req, res) => {
+  try {
+    const ESP32_CAM_URL = process.env.ESP32_CAM_URL;
+    
+    if (!ESP32_CAM_URL) {
+      return res.status(500).json({ 
+        error: "ESP32_CAM_URL not configured in .env" 
+      });
+    }
+
+    const response = await axios.get(ESP32_CAM_URL, {
+      responseType: 'stream'
+    });
+
+    res.set('Content-Type', 'multipart/x-mixed-replace; boundary=frame');
+    response.data.pipe(res);
+  } catch (error) {
+    console.error("❌ Camera stream error:", error);
+    res.status(500).json({ error: "Failed to fetch camera stream" });
+  }
+});
+
+// ==========================================
+// ❌ ERROR HANDLER MIDDLEWARE
+// ==========================================
 app.use(autoResync);
 
-// Start server
-sequelize.sync().then(() => {
-  app.listen(5000, () => console.log("Server running on port 5000"));
-});
+// ==========================================
+// 🚀 START SERVER
+// ==========================================
+const PORT = process.env.PORT || 5000;
+
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log("✅ Database connected!");
+    
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server running at http://0.0.0.0:${PORT}`);
+      console.log("📡 MQTT client initialized and listening...");
+    });
+  })
+  .catch((err) => {
+    console.error("❌ Unable to connect to database:", err);
+  });
